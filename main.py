@@ -155,8 +155,6 @@ def train(train_loader, model, classifier, criterion, optimizer, epoch):
     loss_display = 0.0
 
     for batch_idx, (data, target) in enumerate(train_loader, 1):
-        print (data.shape, target)
-        exit()
         iteration = (epoch - 1) * len(train_loader) + batch_idx
         adjust_learning_rate(optimizer, iteration, args.step_size)
         data, target = data.to(device), target.to(device)
