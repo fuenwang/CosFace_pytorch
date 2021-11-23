@@ -16,11 +16,13 @@ def extractDeepFeature(img, model, is_gray):
     if is_gray:
         transform = transforms.Compose([
             transforms.Grayscale(),
+            transforms.CenterCrop([112, 96]),
             transforms.ToTensor(),  # range [0, 255] -> [0.0,1.0]
             transforms.Normalize(mean=(0.5,), std=(0.5,))  # range [0.0, 1.0] -> [-1.0,1.0]
         ])
     else:
         transform = transforms.Compose([
+            transforms.CenterCrop([112, 96]),
             transforms.ToTensor(),  # range [0, 255] -> [0.0,1.0]
             transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))  # range [0.0, 1.0] -> [-1.0,1.0]
         ])
@@ -34,7 +36,7 @@ def KFold(n=6000, n_folds=10):
     folds = []
     base = list(range(n))
     for i in range(n_folds):
-        test = base[i * n / n_folds:(i + 1) * n / n_folds]
+        test = base[i * n // n_folds:(i + 1) * n // n_folds]
         train = list(set(base) - set(test))
         folds.append([train, test])
     return folds
@@ -67,8 +69,8 @@ def eval(model, model_path=None, is_gray=False):
     predicts = []
     model.load_state_dict(torch.load(model_path))
     model.eval()
-    root = '/home/wangyf/dataset/lfw/lfw-112X96/'
-    with open('/home/wangyf/Project/sphereface/test/data/pairs.txt') as f:
+    root = '/home/Futen/Data/lfw_116x100/'
+    with open('/home/Futen/Data/lfw_funneled_pairs/pairs.txt') as f:
         pairs_lines = f.readlines()[1:]
 
     with torch.no_grad():
@@ -100,9 +102,9 @@ def eval(model, model_path=None, is_gray=False):
     thd = []
     folds = KFold(n=6000, n_folds=10)
     thresholds = np.arange(-1.0, 1.0, 0.005)
-    predicts = np.array(map(lambda line: line.strip('\n').split(), predicts))
+    predicts = np.array(list(map(lambda line: line.strip('\n').split(), predicts)))
     for idx, (train, test) in enumerate(folds):
-        best_thresh = find_best_threshold(thresholds, predicts[train])
+        best_thresh = find_best_threshold(thresholds, predicts[train, :])
         accuracy.append(eval_acc(best_thresh, predicts[test]))
         thd.append(best_thresh)
     print('LFWACC={:.4f} std={:.4f} thd={:.4f}'.format(np.mean(accuracy), np.std(accuracy), np.mean(thd)))
@@ -111,5 +113,5 @@ def eval(model, model_path=None, is_gray=False):
 
 
 if __name__ == '__main__':
-    _, result = eval(net.sphere().to('cuda'), model_path='checkpoint/CosFace_24_checkpoint.pth')
+    _, result = eval(net.sphere().to('cuda'), model_path='checkpoint/CosFace_0_checkpoint.pth')
     np.savetxt("result.txt", result, '%s')

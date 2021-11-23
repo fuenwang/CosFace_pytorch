@@ -23,13 +23,13 @@ import layer
 parser = argparse.ArgumentParser(description='PyTorch CosFace')
 
 # DATA
-parser.add_argument('--root_path', type=str, default='/home/t-fuenwang/Data/CASIA-WebFace_116x100',
+parser.add_argument('--root_path', type=str, default='/home/Futen/Data/CASIA-WebFace_116x100',
                     help='path to root path of images')
 parser.add_argument('--database', type=str, default='WebFace',
                     help='Which Database for train. (WebFace, VggFace2)')
 parser.add_argument('--train_list', type=str, default=None,
                     help='path to training list')
-parser.add_argument('--batch_size', type=int, default=4,
+parser.add_argument('--batch_size', type=int, default=512,
                     help='input batch size for training (default: 512)')
 parser.add_argument('--is_gray', type=bool, default=False,
                     help='Transform input image to gray or not  (default: False)')

@@ -16,3 +16,4 @@ layout_task/
 .vscode
 __pycache__
 checkpoint/
+result.txt
