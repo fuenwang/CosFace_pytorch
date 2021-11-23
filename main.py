@@ -23,13 +23,13 @@ import layer
 parser = argparse.ArgumentParser(description='PyTorch CosFace')
 
 # DATA
-parser.add_argument('--root_path', type=str, default='',
+parser.add_argument('--root_path', type=str, default='/home/t-fuenwang/Data/CASIA-WebFace_116x100',
                     help='path to root path of images')
 parser.add_argument('--database', type=str, default='WebFace',
                     help='Which Database for train. (WebFace, VggFace2)')
 parser.add_argument('--train_list', type=str, default=None,
                     help='path to training list')
-parser.add_argument('--batch_size', type=int, default=512,
+parser.add_argument('--batch_size', type=int, default=4,
                     help='input batch size for training (default: 512)')
 parser.add_argument('--is_gray', type=bool, default=False,
                     help='Transform input image to gray or not  (default: False)')
@@ -65,11 +65,12 @@ args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 device = torch.device("cuda" if args.cuda else "cpu")
 
-if args.database is 'WebFace':
-    args.train_list = '/home/wangyf/dataset/CASIA-WebFace/CASIA-WebFace-112X96.txt'
-    args.num_class = 10572
+if args.database == 'WebFace':
+    #args.train_list = '/home/wangyf/dataset/CASIA-WebFace/CASIA-WebFace-112X96.txt'
+    args.train_list = './casia_list.txt'
+    args.num_class = 10574
     args.step_size = [16000, 24000]
-elif args.database is 'VggFace2':
+elif args.database == 'VggFace2':
     args.train_list = '/home/wangyf/dataset/VGG-Face2/VGG-Face2-112X96.txt'
     args.num_class = 8069
     args.step_size = [80000, 120000, 140000]
@@ -79,13 +80,13 @@ else:
 
 def main():
     # --------------------------------------model----------------------------------------
-    if args.network is 'sphere20':
+    if args.network == 'sphere20':
         model = net.sphere(type=20, is_gray=args.is_gray)
         model_eval = net.sphere(type=20, is_gray=args.is_gray)
-    elif args.network is 'sphere64':
+    elif args.network == 'sphere64':
         model = net.sphere(type=64, is_gray=args.is_gray)
         model_eval = net.sphere(type=64, is_gray=args.is_gray)
-    elif args.network is 'LResNet50E_IR':
+    elif args.network == 'LResNet50E_IR':
         model = net.LResNet50E_IR(is_gray=args.is_gray)
         model_eval = net.LResNet50E_IR(is_gray=args.is_gray)
     else:
@@ -111,12 +112,14 @@ def main():
         train_transform = transforms.Compose([
             transforms.Grayscale(),
             transforms.RandomHorizontalFlip(),
+            transforms.CenterCrop([112, 96]),
             transforms.ToTensor(),  # range [0, 255] -> [0.0,1.0]
             transforms.Normalize(mean=(0.5,), std=(0.5,))
         ])  # gray
     else:
         train_transform = transforms.Compose([
             transforms.RandomHorizontalFlip(),
+            transforms.CenterCrop([112, 96]),
             transforms.ToTensor(),  # range [0, 255] -> [0.0,1.0]
             transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))  # range [0.0, 1.0] -> [-1.0,1.0]
         ])
@@ -152,6 +155,8 @@ def train(train_loader, model, classifier, criterion, optimizer, epoch):
     loss_display = 0.0
 
     for batch_idx, (data, target) in enumerate(train_loader, 1):
+        print (data.shape, target)
+        exit()
         iteration = (epoch - 1) * len(train_loader) + batch_idx
         adjust_learning_rate(optimizer, iteration, args.step_size)
         data, target = data.to(device), target.to(device)
@@ -171,9 +176,9 @@ def train(train_loader, model, classifier, criterion, optimizer, epoch):
         if batch_idx % args.log_interval == 0:
             time_used = time.time() - time_curr
             loss_display /= args.log_interval
-            if args.classifier_type is 'MCP':
+            if args.classifier_type == 'MCP':
                 INFO = ' Margin: {:.4f}, Scale: {:.2f}'.format(classifier.m, classifier.s)
-            elif args.classifier_type is 'AL':
+            elif args.classifier_type == 'AL':
                 INFO = ' lambda: {:.4f}'.format(classifier.lamb)
             else:
                 INFO = ''
