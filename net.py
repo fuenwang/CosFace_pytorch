@@ -20,9 +20,9 @@ class sphere(nn.Module):
     def __init__(self, type=20, is_gray=False):
         super(sphere, self).__init__()
         block = Block
-        if type is 20:
+        if type == 20:
             layers = [1, 2, 4, 1]
-        elif type is 64:
+        elif type == 64:
             layers = [3, 7, 16, 3]
         else:
             raise ValueError('sphere' + str(type) + " IS NOT SUPPORTED! (sphere20 or sphere64)")
@@ -163,8 +163,11 @@ class LResNet(nn.Module):
         x = self.layer2(x)
         x = self.layer3(x)
         x = self.layer4(x)
+        
+        x = x.view(x.shape[0], -1)
 
-        x = x.view(x.size(0), -1)
+        #print (x.shape)
+        #print (self.fc)
         x = self.fc(x)
 
         return x
@@ -179,3 +182,11 @@ def LResNet50E_IR(is_gray=False):
     layers = [3, 4, 14, 3]
     return LResNet(BlockIR, layers, filter_list, is_gray)
 # ---------------------------------- LResNet50E-IR network End ----------------------------------
+
+
+if __name__ == '__main__':
+    model = LResNet50E_IR().cuda()
+    model.train()
+    batch = torch.zeros(2, 3, 112, 96).cuda()
+    a = model(batch)
+    print (a.shape)
